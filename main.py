@@ -7,9 +7,11 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from sentence_transformers import SentenceTransformer, util
 import torch, pandas
-# import numpy as np
+from dotenv import load_dotenv
 
-openai.api_key = os.getenv('OPENAI_API_KEY')
+# Load environment variables from .env
+load_dotenv()
+openai.api_key = os.environ.get('OPENAI_API_KEY')
 
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 def get_similarity_text(jd, resume_embedding):
