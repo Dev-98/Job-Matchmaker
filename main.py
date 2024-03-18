@@ -8,6 +8,7 @@ from nltk.tokenize import word_tokenize
 from sentence_transformers import SentenceTransformer, util
 import torch, pandas
 from dotenv import load_dotenv
+import google.generativeai as genai
 
 # Load environment variables from .env
 load_dotenv()
@@ -61,6 +62,11 @@ def show_pdf(file_path):
     # pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="700" height="1000" type="application/pdf">'
     pdf_display = F'<iframe src="data:application/pdf;base64,{base64_pdf}" width="700" height="1000" type="application/pdf"></iframe>'
     st.markdown(pdf_display, unsafe_allow_html=True)
+
+def get_gemini_repsonse(input):
+    model=genai.GenerativeModel('gemini-pro')
+    response=model.generate_content(input)
+    return response.text
 
 def chat_completion(text,jd):
     response = openai.ChatCompletion.create(
