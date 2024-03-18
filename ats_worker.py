@@ -1,61 +1,91 @@
-import re
+from dotenv import load_dotenv
+import os, io, base64
+import streamlit as st
+from PIL import Image 
+import pdf2image
+from google.cloud import vision
+import google.generativeai as genai
+from google.oauth2 import service_account
 
-def ats_scorer(resume_text):
-  """
-  ATS scorer that rates a resume based on various points and gives a percentage as a score for : Sections, Brevity, Impact, and Styles.
+load_dotenv()
+# Initialize Google Cloud clients
+gcp_credentials = service_account.Credentials.from_service_account_file("image2text.json")
+client = vision.ImageAnnotatorClient(credentials=gcp_credentials)
 
-  Args:
-    resume_text (str): The text of the resume.
+genai.configure(api_key=os.getenv("GENAI_API_KEY"))
 
-  Returns:
-    dict: A dictionary containing the scores for each section.
-  """
 
-  # Define the sections that the ATS will look for.
-  sections = ['Summary', 'experience', 'education', 'skills']
+def get_gemini_response(input,pdf_content,prompt):
+    model=genai.GenerativeModel('gemini-pro-vision')
+    response=model.generate_content([input,pdf_content[0],prompt])
+    return response.text
 
-  # Define the scoring criteria for each section.
-  section_scores = [
-    {'name': 'summary', 'max_score': 10, 'criteria': ['Length (less than 100 words)', 'Use of keywords', 'Clear and concise language']},
-    {'name': 'experience', 'max_score': 20, 'criteria': ['Relevant experience', 'Quantified accomplishments', 'Use of strong action verbs']},
-    {'name': 'education', 'max_score': 10, 'criteria': ['Relevant degrees and certifications', 'GPA (if high)', 'Honors and awards']},
-    {'name': 'skills', 'max_score': 10, 'criteria': ['In-demand skills', 'Variety of skills', 'Proficiency levels']},
-    # {'name': 'Awards', 'max_score': 5, 'criteria': ['Relevant awards', 'Recent awards', 'Prestige of awards']}
-  ]
+def input_pdf_setup(uploaded_file):
+    if uploaded_file is not None:
+        ## Convert the PDF to image
+        images=pdf2image.convert_from_bytes(uploaded_file.read())
 
-  # Initialize the scores for each section.
-  scores = {section: 0 for section in sections}
+        first_page=images[0]
 
-  # Check for each section in the resume.
-  for section in sections:
-    # Check if the section is present in the resume.
-    if section in resume_text:
-      # Get the text of the section.
-      section_text = re.search(fr'^{section}(.*?)(?=\S+\n|\Z)', resume_text, flags=re.DOTALL).group(1)
+        # Convert to bytes
+        image_data = vision.Image(content=first_page)
+        response = client.text_detection(image=image_data)
+        texts = response.text_annotations
+        if texts:
+            return texts[0].description
+        else:
+            return None
+    else:
+        raise FileNotFoundError("No file uploaded")
 
-      # Check if the section meets the scoring criteria.
-      for criterion in section_scores[section]['criteria']:
-        if criterion in section_text:
-          # Increment the score for the section.
-          scores[section] += section_scores[section]['max_score'] / len(section_scores[section]['criteria'])
+## Streamlit App
 
-  # Calculate the total score.
-  total_score = sum(scores.values())
+st.set_page_config(page_title="ATS Resume Expert")
+st.header("ATS Tracking System")
+input_text=st.text_area("Job Description: ",key="input")
+uploaded_file=st.file_uploader("Upload your resume(PDF)...",type=["pdf"])
 
-  # Calculate the percentage score.
-  percentage_score = total_score / sum([section['max_score'] for section in section_scores]) * 100
 
-  # Return the scores.
-  return {
-    'sections': scores,
-    'total': total_score,
-    'percentage': percentage_score
-  }
+submit1 = st.button("Tell Me About the Resume")
 
-# Example usage
-resume_text = """
-dev machine learning engineer faridabad haryana devparker gmail com linkedin github twitter kaggle core skills python javascript agile leadership scrum master computer vision generative ai git github mlops kubernetes mongodb firebase db pinecone mysql machine learning deep learning google cloud platform microsoft azure vector db docker flask fastapi professional experience dataknobs ml engineer june present automated key processes kreatewebsite major product enhance efficiency uplifted machine learning project predictive model precision made usable converting old written functions new one collaborate senior developers update website create new features open source contributor mlflow contributor august august contributed key functionality got merged administrator mlflow google cloud google cloud facilitator may july acquired proficiency docker mlops kubernetes kubernetes relevant projects sign language tutor march present used learning sign language fun interactive way chakla controller asphalt january january innovative racing game controlled unique physical interface round flat board blue square uses opencv computer vision techniques translate board movements game actions medsarthi january january helping seniors understand medications simple image upload voice enabled explanations education maharishi dayanand university rohtak bachelor computer science artificial intelligence rajokari institute technology dseu diploma information technology enabled service management
+#submit2 = st.button("How Can I Improvise my Skills")
+
+submit3 = st.button("Percentage match")
+
+input_prompt1 = """
+ You are an experienced Technical Human Resource Manager,your task is to review the provided resume against the job description. 
+  Please share your professional evaluation on whether the candidate's profile aligns with the role. 
+ Highlight the strengths and weaknesses of the applicant in relation to the specified job requirements.
 """
 
-scores = ats_scorer(resume_text)
-print(scores)
+input_prompt3 = """
+You are an skilled ATS (Applicant Tracking System) scanner with a deep understanding of data science and ATS functionality, 
+your task is to evaluate the resume against the provided job description. give me the percentage of match if the resume matches
+the job description. First the output should come as percentage and then keywords missing and last final thoughts.
+"""
+
+if submit1:
+    if uploaded_file is not None:
+        pdf_content=input_pdf_setup(uploaded_file)
+        # response=get_gemini_response(input_prompt1,pdf_content,input_text)
+        st.subheader("The Repsonse is")
+        st.write(pdf_content)
+    else:
+        st.write("Please uplaod the resume")
+
+elif submit3:
+    if uploaded_file is not None:
+        pdf_content=input_pdf_setup(uploaded_file)
+        # response=get_gemini_response(input_prompt3,pdf_content,input_text)
+        st.subheader("The Repsonse is")
+        st.write(pdf_content)
+    else:
+        st.write("Please uplaod the resume")
+
+
+
+   
+
+
+
+
