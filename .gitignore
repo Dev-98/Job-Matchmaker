@@ -6,6 +6,7 @@ __pycache__/
 test.py
 # C extensions
 *.so
+image2text.json
 
 # Distribution / packaging
 .Python
