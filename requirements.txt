@@ -7,3 +7,4 @@ sentence-transformers
 PyPDF2
 google.generativeai
 nltk
+google-cloud-aiplatform==1.25
