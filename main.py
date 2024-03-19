@@ -14,6 +14,7 @@ import google.generativeai as genai
 load_dotenv()
 openai.api_key = os.environ.get('OPENAI_API_KEY')
 
+
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 def get_similarity_text(jd, resume_embedding):
     '''finding similarity between two texts'''

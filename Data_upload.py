@@ -20,7 +20,7 @@ def generate_embedding(text: str) -> list[float]:
 	return response.json()
 
 
-def upsert_data(text,company,stipend,JobTitles,skills,link,namespace):
+def upsert_data(text: str,company: str,stipend: str,JobTitles,skills,link,namespace: str) -> None:
     pine = Pinecone(api_key=os.getenv('PINECONE_KEY'))
     index = pine.Index(os.getenv('PINECONE_INDEX'))
         
@@ -40,4 +40,8 @@ def upsert_data(text,company,stipend,JobTitles,skills,link,namespace):
 
 if __name__ == '__main__':
     csv_path = 'newdata.csv'
+    data = pd.read_csv(csv_path)
+    for i,desc in enumerate(data['Description']) :
+          upsert_data(desc,data['Company_Name'][i],data['Stipend'][i],data['JobTitles'][i],data['Skills'][i],data['Links'][i],"internship")
+	# print(generate_embedding("hello world, this is a test data"))
 
