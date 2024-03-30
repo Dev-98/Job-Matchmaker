@@ -51,7 +51,6 @@ def pdf_reader(pdf_file):
     
         # Define a regular expression pattern to match numbers
     pattern2 = r'\d+'
-
     # Remove numbers from the text using regex substitution
     text_without_numbers = re.sub(pattern2, '', clean_text)
     
