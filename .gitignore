@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 test.py
+resumes/
 # C extensions
 *.so
 image2text.json
